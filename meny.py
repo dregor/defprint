@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
-from PyQt5 import QtCore,QtWidgets
-from win32print import EnumPrinters, GetDefaultPrinter
+from PyQt5 import QtCore, QtWidgets, QtGui
+from ldapconmanager import LdapConManager
+import sys
+# from win32print import EnumPrinters, GetDefaultPrinter
 
 
 class ComboBoxDelegate(QtWidgets.QItemDelegate):
@@ -25,30 +27,39 @@ class ComboBoxDelegate(QtWidgets.QItemDelegate):
         pass
 
 class TableW(QtWidgets.QWidget):
-    def __init__(self, parent=None, printers=[]):
-        super(TableW, self).__init__(parent, QtCore.Qt.WindowTitleHint | QtCore.Qt.WindowSystemMenuHint)
-        items = ['one','two','three']        
-        self.itemsTable = QtWidgets.QTableWidget(len(items), 2)
+    def __init__(self, parent=None, users={}, printers=[]):
+        super(TableW, self).__init__(parent)
+        self.itemsTable = QtWidgets.QTableWidget(len(users.keys()), 3)
         self.itemsTable.setItemDelegateForColumn(1, ComboBoxDelegate(self, printers)) #for column number 1
-        for row, item in enumerate(items):
-            name = QtWidgets.QTableWidgetItem(item)
-#           name.setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
-            self.itemsTable.setItem(row, 0, name)
-            self.itemsTable.setItem(row, 1, QtWidgets.QTableWidgetItem(GetDefaultPrinter()))
+        for row, user in enumerate(users):
+            self.itemsTable.setItem(row, 0, QtWidgets.QTableWidgetItem(user))
+            self.itemsTable.setItem(row, 1, QtWidgets.QTableWidgetItem('empty'))
+            self.itemsTable.setItem(row, 2, QtWidgets.QTableWidgetItem(str(users[user])))
         layout = QtWidgets.QVBoxLayout()
+        self.itemsTable.setHorizontalHeaderLabels(['user', 'printer', 'sid'])
+        self.itemsTable.resizeColumnsToContents()
         layout.addWidget(self.itemsTable)
         self.setLayout(layout)
 
 
 if __name__ == '__main__':
-    printers = []
-    for i in EnumPrinters(2):
-        printers.append(i[2])
-    import sys
+    domain = 'ou=Users,dc=megateks,dc=net'
+    server = '172.16.0.111'
+    ldap_connection = LdapConManager(domain, server)
+    if not isinstance( ldap_connection, str ):
+        users = ldap_connection.get_user_sid()
+    else:
+        users = {}
+
+    printers = ['test1','test2']
+    # for i in EnumPrinters(2):
+    #     printers.append(i[2])
+
     app = QtWidgets.QApplication(sys.argv)
-    table = TableW(printers=printers)
+    table = TableW(users=users, printers=printers)
+    table.setWindowTitle('Defautl printers')
+    table.setGeometry(0, 20,500,1024)
     
-    table.show()
-    res = app.exec_()
-    table = 0
-    sys.exit(res)
+    table.showMaximized()
+
+    sys.exit(app.exec_())
