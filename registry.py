@@ -2,7 +2,7 @@
     Win Registry module
     (_winreg wrapper)
 '''
-import winreg as reg
+import _winreg as reg
 
 # convenience dicts
 vTyp={
@@ -162,10 +162,30 @@ class Root(Key):
 
 #example
 if __name__=='__main__':
-    root=Root()         # we should need only one Root per application, so let's instanciate it here.
+    root=Root()
     try:
-        print('\n---- Keys names -----\n')
-        for k in root.local_machine(r'software/hewlett-packard').keys.values(): print(k)
-        print(root.current_user.create('python').setVal('TEST', 'TEST'))
-        print(root.current_user('python').setVal('TEST2', 3000, 'dw'))
+        print('\n---- Keys -----\n')
+        for k in root.current_user(r'console').keys.values(): print(k)
+        print('\n---- Vals -----\n')
+        for k in root.current_user(r'console').vals: print(k)
+        print('\n---- HERE -----\n')
+        try:
+            root.current_user('python')
+        except KeyError as e:
+            root.current_user.create('python')
+        finally:
+            print(root.current_user('python'))
+
+        print('\n---- NOT HERE -----\n')
+        try:
+            print(root.current_user('nopython'))
+        except KeyError as e:
+            print('KEY ERROR ' + str(e))
+
+        print('\n---- Set Vals -----\n')
+        root.current_user('python').setVal('TEST', 'TEST')
+        root.current_user('python').setVal('TEST2', 3000, 'dw')
+        for item in root.current_user('python').vals:
+            print(item)
+
     except UnicodeError: pass

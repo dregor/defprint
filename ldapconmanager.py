@@ -29,7 +29,7 @@ class LdapConManager():
 		attrs=(['uid','sambaSID'])
 		result = {}
 		for dn, sid in self.connection.search(self.domain, filter, attrs):
-			result.update( {sid['uid'][0]: sid['sambaSID'][0]} )
+			result.update( {sid['uid'][0]: {'sid':sid['sambaSID'][0]}} )
 		return result
 
 
