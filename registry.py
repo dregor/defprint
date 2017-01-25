@@ -46,7 +46,7 @@ class Key(object):
         if not self._keys:
             self._keys={}
             for i in range(reg.QueryInfoKey(self.wrk)[0]):
-                name=reg.EnumKey(self.wrk, i).lower()
+                name=reg.EnumKey(self.wrk, i)
                 try:
                     self._keys[name]=Key(self, name)
                 except WindowsError: pass
@@ -61,12 +61,13 @@ class Key(object):
                     self._vals.append(Val(self, *reg.EnumValue(self.wrk, i)))
                 except WindowsError: pass
         return self._vals
-    def __call__(self, path):
-        # access to a key
-        path=path.lower()
+    def __call__(self, path=None):
+        # access to a key        
         key=self
-        for p in path.split('/'):
-            key=key.keys[p]
+        if path:
+            path=path
+            for p in path.split('/'):
+                key=key.keys[p]
         return key
     def __str__(self):
         return '%s%s/' % (self.parent.__str__(), self.name)
