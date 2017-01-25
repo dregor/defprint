@@ -1,12 +1,16 @@
-from ldap_paged_search import LdapPagedSearch
 from getpass import getpass
+from time import sleep
+import ldap
 
 
 class LdapConManager():
 	def __init__(self, domain, server, user='', password=''):
 		self.domain = domain
-		self.connection = LdapPagedSearch('ldap://' + server, user, password, maxPages=1000, pageSize=500)
+		self.connection = ldap.initialize('ldap://' + server)
+		self.connection.bind_s( user, password )
 
+	def search(self, filter, attr):            
+		return self.connection.search_s(self.domain, ldap.SCOPE_SUBTREE, filter, attr)
 
 	def getAllUsers(self):
 		filter=('(&(objectclass=person)(uid=*))')
@@ -23,13 +27,13 @@ class LdapConManager():
 			filter_list.append('(sambaSID=%s)' % (sid))
 		filter = '(&' + ''.join(filter_list) + ')'
 		attrs=(['uid','sambaSID'])
-		for dn, data in self.connection.search(self.domain, filter, attrs):
+		for dn, data in self.search( filter, attrs):
 			if sid:
 				yield {data['sambaSID'][0]: {'uid':data['uid'][0]}}
 			else:
 				yield {data['uid'][0]: {'sid':data['sambaSID'][0]}} 
 
-	def getUserSidList(self, uid=None, sid=None):
+	def getUserSidDict(self, uid=None, sid=None):
 		result = {}
 		for user in self.getUserSid(uid, sid):
 			result.update(user)
@@ -38,10 +42,10 @@ class LdapConManager():
 
 if __name__=='__main__':
 	domain = 'ou=Users,dc=megateks,dc=net'
-	server = '172.16.0.111'	
+	server = '10.10.0.1'	
 	ldap_connection = LdapConManager(domain, server)
 	if not isinstance( ldap_connection, str ):
-		users = ldap_connection.getUserSidList()
+		users = ldap_connection.getUserSidDict()
 		for user in users:
 			print(user)
 			for item in users[user]:
