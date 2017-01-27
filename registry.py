@@ -61,6 +61,12 @@ class Key(object):
                     self._vals.append(Val(self, *reg.EnumValue(self.wrk, i)))
                 except WindowsError: pass
         return self._vals
+    @property
+    def valsDict(self):
+        tmp_vals = {}
+        for item in self.vals:
+            tmp_vals.update({item.name: item.val})
+        return tmp_vals
     def __call__(self, path=None):
         # access to a key        
         key=self

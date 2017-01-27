@@ -33,6 +33,7 @@ class LdapConManager():
 			else:
 				yield {data['uid'][0]: {'sid':data['sambaSID'][0]}} 
 
+
 	def getUserSidDict(self, uid=None, sid=None):
 		result = {}
 		for user in self.getUserSid(uid, sid):
