@@ -1,6 +1,6 @@
 from win32print import *
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt5.Qt import Qt, QShortcut, QKeySequence, QAction, QIcon
 from ConfigParser import ConfigParser
 from main import UserManager
 from ldapconmanager import LdapConManager
@@ -42,7 +42,7 @@ class ComboBoxDelegate(QItemDelegate):
         editor.addItems(self.items)
         editor.currentIndexChanged.connect(self.emitCommitData)  
         return editor
-
+ 
 
     def setModelData(self, editor, model, index):
         model.setData(index, editor.currentText())
@@ -52,8 +52,6 @@ class ComboBoxDelegate(QItemDelegate):
         try:
             table = self.parent().table
             sid = table.item(table.selectionModel().selectedRows()[0].row(), 0).text()
-            print('LENGTH - ' + str(len(table.selectionModel().selectedRows())))
-            print('ROW - ' + str(table.selectionModel().selectedRows()[0].row()))
             printer = self.editor.currentText()
             self.parent().userManager.setDefaultPrinter(sid, printer)
         except Exception as e:
@@ -74,6 +72,15 @@ class Window(QWidget):
     def make_table(self):
         users = self.userManager.getUsersFromRegDict()
         self.table = table = QTableWidget(len(users.keys()), 3)
+        self.searchBox = searchBox = QTextEdit()
+        searchBox.hide()
+        searchBox.setFixedHeight(30)
+        searchBox.textChanged.connect(self.search)
+        self.SearchAction = QAction(QIcon(), "Search", self)
+        self.SearchAction.setShortcut("Ctrl+f")
+        self.SearchAction.setShortcutContext(Qt.ApplicationShortcut)
+        self.addAction(self.SearchAction)
+        self.SearchAction.triggered.connect(self.searchShow)
         for row, user in enumerate(users):
             table.setItem(row, 0, QTableWidgetItem(user))
             table.setItem(row, 1, QTableWidgetItem(users[user]['uid']))
@@ -92,12 +99,27 @@ class Window(QWidget):
             table.item(row, 0).setFlags(flags)
             table.item(row, 1).setFlags(flags)
             # table.item(row, 3).setFlags(flags)
+        self.layout.addWidget(searchBox)
         self.layout.addWidget(table)
+
+
+    def searchShow(self):
+        if self.searchBox.isVisible():
+            self.searchBox.hide()
+        else:
+            self.searchBox.show()
+            
+
+    def search(self):
+        items = self.table.findItems(self.searchBox.toPlainText(), Qt.MatchStartsWith)
+        self.table.selectRow(items[0].row())
 
 
     def update_printers(self):
         if self.table is not None:
             self.table.setItemDelegateForColumn(2, ComboBoxDelegate(self, self.printers))
+
+
 
 if __name__ == '__main__':
     config = ConfigParser()
