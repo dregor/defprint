@@ -62,8 +62,8 @@ class UserManager():
 
 
 if __name__ == '__main__':
-    domain = 'ou=Users,dc=megateks,dc=net'
-    server = '10.10.0.1'
+    domain = 'ou=Users,dc=domain,dc=net'
+    server = '192.168.0.1'
     um = UserManager(domain, server)
 
     for i in um.getUsersFromReg():
